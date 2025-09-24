@@ -141,21 +141,25 @@
     </div>
 
     <script>
-        // 从localStorage加载数据或使用初始数据
-        let personnel = JSON.parse(localStorage.getItem('personnelData')) || [
+        // 检查localStorage中是否已有数据
+        const storedData = localStorage.getItem('personnelData');
+        
+        // 初始数据只有3条记录
+        const initialData = [
             { id: 1, name: "John Doe", age: 30, nationality: "USA" },
             { id: 2, name: "Jane Smith", age: 28, nationality: "Canada" },
-            { id: 3, name: "Carlos Rodriguez", age: 35, nationality: "Spain" },
-            { id: 4, name: "Yuki Tanaka", age: 26, nationality: "Japan" },
-            { id: 5, name: "Sophie Dubois", age: 32, nationality: "France" }
+            { id: 3, name: "Carlos Rodriguez", age: 35, nationality: "Spain" }
         ];
+        
+        // 从localStorage加载数据或使用初始数据
+        let personnel = storedData ? JSON.parse(storedData) : initialData;
         
         // 计算下一个ID (从现有数据中获取最大ID + 1)
         let nextId = personnel.length > 0 
             ? Math.max(...personnel.map(p => p.id)) + 1 
             : 1;
         
-        // 保存数据到localStorage的函数
+        // 保存数据到localStorage的函数 - 确保随时保存最新状态
         function saveToLocalStorage() {
             localStorage.setItem('personnelData', JSON.stringify(personnel));
         }
@@ -328,6 +332,9 @@
                 closeModalFunc();
             }
         });
+        
+        // 页面关闭前确保数据已保存
+        window.addEventListener('beforeunload', saveToLocalStorage);
     </script>
 </body>
 </html>
