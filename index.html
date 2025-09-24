@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Personnel List</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    
+    <!-- Tailwind配置 -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#3B82F6',
+                        secondary: '#10B981',
+                        accent: '#6366F1',
+                        neutral: '#64748B',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .table-shadow {
+                box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            }
+            .hover-effect {
+                transition: all 0.2s ease-in-out;
+            }
+            .hover-effect:hover {
+                transform: translateY(-2px);
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <div class="container mx-auto px-4 py-8 max-w-6xl">
+        <!-- 页面标题 -->
+        <header class="mb-8 text-center">
+            <h1 class="text-[clamp(1.8rem,4vw,2.5rem)] font-bold text-gray-800 mb-2">Personnel List</h1>
+            <p class="text-gray-600">A simple list displaying personnel information</p>
+        </header>
+        
+        <!-- 功能区 -->
+        <div class="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
+            <div class="relative w-full sm:w-64">
+                <input type="text" id="searchInput" 
+                       class="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
+                       placeholder="Search by name...">
+                <i class="fa fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+            </div>
+            
+            <button id="addBtn" 
+                    class="bg-primary hover:bg-primary/90 text-white px-6 py-2 rounded-lg font-medium flex items-center gap-2 transition-all hover:shadow-lg">
+                <i class="fa fa-plus"></i> Add Person
+            </button>
+        </div>
+        
+        <!-- 人员列表表格 -->
+        <div class="overflow-x-auto bg-white rounded-xl table-shadow">
+            <table class="w-full text-left">
+                <thead>
+                    <tr class="bg-gray-100 border-b border-gray-200">
+                        <th class="px-6 py-4 font-semibold text-gray-700">Number</th>
+                        <th class="px-6 py-4 font-semibold text-gray-700">Name</th>
+                        <th class="px-6 py-4 font-semibold text-gray-700">Age</th>
+                        <th class="px-6 py-4 font-semibold text-gray-700">Nationality</th>
+                        <th class="px-6 py-4 font-semibold text-gray-700">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="personnelTable">
+                    <!-- 表格内容将通过JavaScript动态生成 -->
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- 空状态提示 -->
+        <div id="emptyState" class="hidden py-16 text-center">
+            <i class="fa fa-users text-gray-300 text-5xl mb-4"></i>
+            <p class="text-gray-500">No personnel records found</p>
+            <button id="emptyAddBtn" 
+                    class="mt-4 bg-primary hover:bg-primary/90 text-white px-6 py-2 rounded-lg font-medium transition-all">
+                Add First Person
+            </button>
+        </div>
+    </div>
+    
+    <!-- 添加/编辑人员的模态框 -->
+    <div id="modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-xl w-full max-w-md p-6 transform transition-all scale-95 opacity-0" id="modalContent">
+            <div class="flex justify-between items-center mb-4">
+                <h2 id="modalTitle" class="text-xl font-bold text-gray-800">Add New Person</h2>
+                <button id="closeModal" class="text-gray-500 hover:text-gray-700">
+                    <i class="fa fa-times text-xl"></i>
+                </button>
+            </div>
+            
+            <form id="personForm">
+                <input type="hidden" id="personId">
+                
+                <div class="mb-4">
+                    <label for="name" class="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                    <input type="text" id="name" required
+                           class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all">
+                </div>
+                
+                <div class="mb-4">
+                    <label for="age" class="block text-sm font-medium text-gray-700 mb-1">Age</label>
+                    <input type="number" id="age" min="0" max="150" required
+                           class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all">
+                </div>
+                
+                <div class="mb-6">
+                    <label for="nationality" class="block text-sm font-medium text-gray-700 mb-1">Nationality</label>
+                    <input type="text" id="nationality" required
+                           class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all">
+                </div>
+                
+                <div class="flex gap-3">
+                    <button type="button" id="cancelBtn" 
+                            class="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-all">
+                        Cancel
+                    </button>
+                    <button type="submit" 
+                            class="flex-1 px-4 py-2 bg-primary hover:bg-primary/90 text-white rounded-lg transition-all">
+                        Save
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // 从localStorage加载数据或使用初始数据
+        let personnel = JSON.parse(localStorage.getItem('personnelData')) || [
+            { id: 1, name: "John Doe", age: 30, nationality: "USA" },
+            { id: 2, name: "Jane Smith", age: 28, nationality: "Canada" },
+            { id: 3, name: "Carlos Rodriguez", age: 35, nationality: "Spain" },
+            { id: 4, name: "Yuki Tanaka", age: 26, nationality: "Japan" },
+            { id: 5, name: "Sophie Dubois", age: 32, nationality: "France" }
+        ];
+        
+        // 计算下一个ID (从现有数据中获取最大ID + 1)
+        let nextId = personnel.length > 0 
+            ? Math.max(...personnel.map(p => p.id)) + 1 
+            : 1;
+        
+        // 保存数据到localStorage的函数
+        function saveToLocalStorage() {
+            localStorage.setItem('personnelData', JSON.stringify(personnel));
+        }
+        
+        // DOM元素
+        const personnelTable = document.getElementById('personnelTable');
+        const emptyState = document.getElementById('emptyState');
+        const searchInput = document.getElementById('searchInput');
+        const addBtn = document.getElementById('addBtn');
+        const emptyAddBtn = document.getElementById('emptyAddBtn');
+        const modal = document.getElementById('modal');
+        const modalContent = document.getElementById('modalContent');
+        const modalTitle = document.getElementById('modalTitle');
+        const personForm = document.getElementById('personForm');
+        const personId = document.getElementById('personId');
+        const nameInput = document.getElementById('name');
+        const ageInput = document.getElementById('age');
+        const nationalityInput = document.getElementById('nationality');
+        const closeModal = document.getElementById('closeModal');
+        const cancelBtn = document.getElementById('cancelBtn');
+        
+        // 初始化页面
+        renderTable();
+        
+        // 渲染表格
+        function renderTable(filteredData = null) {
+            const data = filteredData || personnel;
+            
+            // 清空表格
+            personnelTable.innerHTML = '';
+            
+            // 显示空状态或表格数据
+            if (data.length === 0) {
+                personnelTable.parentElement.classList.add('hidden');
+                emptyState.classList.remove('hidden');
+                return;
+            }
+            
+            personnelTable.parentElement.classList.remove('hidden');
+            emptyState.classList.add('hidden');
+            
+            // 添加数据行
+            data.forEach((person, index) => {
+                const row = document.createElement('tr');
+                row.className = 'border-b border-gray-100 hover:bg-gray-50 hover-effect';
+                
+                row.innerHTML = `
+                    <td class="px-6 py-4 text-gray-800">${index + 1}</td>
+                    <td class="px-6 py-4 font-medium text-gray-900">${person.name}</td>
+                    <td class="px-6 py-4 text-gray-800">${person.age}</td>
+                    <td class="px-6 py-4 text-gray-800">${person.nationality}</td>
+                    <td class="px-6 py-4">
+                        <div class="flex gap-2">
+                            <button onclick="editPerson(${person.id})" class="text-accent hover:text-accent/80 transition-colors">
+                                <i class="fa fa-pencil"></i>
+                            </button>
+                            <button onclick="deletePerson(${person.id})" class="text-red-500 hover:text-red-600 transition-colors">
+                                <i class="fa fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                `;
+                
+                personnelTable.appendChild(row);
+            });
+        }
+        
+        // 搜索功能
+        searchInput.addEventListener('input', (e) => {
+            const searchTerm = e.target.value.toLowerCase();
+            const filtered = personnel.filter(person => 
+                person.name.toLowerCase().includes(searchTerm) || 
+                person.nationality.toLowerCase().includes(searchTerm)
+            );
+            renderTable(filtered);
+        });
+        
+        // 打开添加人员模态框
+        function openAddModal() {
+            modalTitle.textContent = 'Add New Person';
+            personForm.reset();
+            personId.value = '';
+            openModal();
+        }
+        
+        // 打开编辑人员模态框
+        function editPerson(id) {
+            const person = personnel.find(p => p.id === id);
+            if (person) {
+                modalTitle.textContent = 'Edit Person';
+                personId.value = person.id;
+                nameInput.value = person.name;
+                ageInput.value = person.age;
+                nationalityInput.value = person.nationality;
+                openModal();
+            }
+        }
+        
+        // 删除人员
+        function deletePerson(id) {
+            if (confirm('Are you sure you want to delete this person?')) {
+                personnel = personnel.filter(person => person.id !== id);
+                saveToLocalStorage(); // 保存更改
+                renderTable();
+            }
+        }
+        
+        // 打开模态框
+        function openModal() {
+            modal.classList.remove('hidden');
+            // 触发动画
+            setTimeout(() => {
+                modalContent.classList.remove('scale-95', 'opacity-0');
+                modalContent.classList.add('scale-100', 'opacity-100');
+            }, 10);
+            nameInput.focus();
+        }
+        
+        // 关闭模态框
+        function closeModalFunc() {
+            modalContent.classList.remove('scale-100', 'opacity-100');
+            modalContent.classList.add('scale-95', 'opacity-0');
+            // 等待动画完成后隐藏
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 200);
+        }
+        
+        // 表单提交处理
+        personForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            const id = personId.value;
+            const name = nameInput.value.trim();
+            const age = parseInt(ageInput.value);
+            const nationality = nationalityInput.value.trim();
+            
+            if (id) {
+                // 更新现有人员
+                const index = personnel.findIndex(p => p.id === parseInt(id));
+                if (index !== -1) {
+                    personnel[index] = { ...personnel[index], name, age, nationality };
+                }
+            } else {
+                // 添加新人员
+                personnel.push({ id: nextId++, name, age, nationality });
+            }
+            
+            saveToLocalStorage(); // 保存更改
+            renderTable();
+            closeModalFunc();
+        });
+        
+        // 事件监听器
+        addBtn.addEventListener('click', openAddModal);
+        emptyAddBtn.addEventListener('click', openAddModal);
+        closeModal.addEventListener('click', closeModalFunc);
+        cancelBtn.addEventListener('click', closeModalFunc);
+        
+        // 点击模态框外部关闭
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                closeModalFunc();
+            }
+        });
+        
+        // 按ESC键关闭模态框
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && !modal.classList.contains('hidden')) {
+                closeModalFunc();
+            }
+        });
+    </script>
+</body>
+</html>
